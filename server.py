@@ -5,7 +5,7 @@ import time
 # SOCK_STREAM == TCP
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
-s.bind((socket.gethostname(), 1233))
+s.bind((socket.gethostname(), 1232))
 
 s.listen(5)
 
@@ -79,7 +79,7 @@ while True:
         playerCount += 1
 
     if(playerCount >= 1):
-        clientsocket.send(bytes("ebic","utf-8"))
+        clientsocket.send(bytes(str(int(players[0].physics.pos.x)) + " " + str(int(players[0].physics.pos.y)) ,"utf-8"))
 
     #handle timing
 
