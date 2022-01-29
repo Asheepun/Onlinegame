@@ -1,7 +1,14 @@
+import socket
+
+s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+
+s.connect((socket.gethostname(), 1233))
+
 import sys
 import time
 import sdl2.ext
 
+FRAME_TIME = 1 / 60
 
 sdl2.ext.init()
 
@@ -29,20 +36,19 @@ while running:
     spriterenderer.render(sprite)
 
 
+    msg = s.recv(1024)
+
+    print(msg.decode("utf-8"))
+
     stopTime = time.perf_counter()
     deltaTime = startTime - stopTime
-    time.sleep(1/60)
-    print("h")
+
+    sleepTime = FRAME_TIME - deltaTime
+    if(sleepTime < 0):
+        sleepTime = 0
+
+    time.sleep(sleepTime)
+    #print("h")
     
     window.refresh()
 
-
-import socket
-
-s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-
-s.connect((socket.gethostname(), 1235))
-
-msg = s.recv(1024)
-
-print(msg.decode("utf-8"))

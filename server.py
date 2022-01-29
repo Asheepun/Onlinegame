@@ -1,6 +1,14 @@
 import socket
 import time
 
+# AF_INET == ipv4
+# SOCK_STREAM == TCP
+s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+
+s.bind((socket.gethostname(), 1233))
+
+s.listen(5)
+
 class Vec2:
     def __init__(self, x, y):
         self.x = x
@@ -38,13 +46,15 @@ bullets = [];
 
 players.append(Player(Vec2(100, 100)))
 
-frameTime = 1 / 60
+FRAME_TIME = 1 / 60
 
 startTime = 0
 stopTime = 0
 deltaTime = 0
 
 programBeginTime = time.perf_counter()
+
+playerCount = 0
 
 while True:
 
@@ -62,13 +72,26 @@ while True:
     for bullet in bullets:
         bullet.physics.update()
 
+    #server stuff
+    if(playerCount < 1):
+        clientsocket, address = s.accept()
+        print("Connection from {address} has been established.")
+        playerCount += 1
+
+    if(playerCount >= 1):
+        clientsocket.send(bytes("ebic","utf-8"))
+
     #handle timing
 
     stopTime = time.perf_counter()
 
     deltaTime = stopTime - startTime
 
-    time.sleep(frameTime - deltaTime)
+    sleepTime = FRAME_TIME - deltaTime
+    if(sleepTime < 0):
+        sleepTime = 0
+
+    time.sleep(sleepTime)
 
 # create the socket
 # AF_INET == ipv4
