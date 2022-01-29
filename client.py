@@ -1,33 +1,48 @@
-import pygame
+import sys
+import time
+import sdl2.ext
 
-pygame.init()
 
-screen = pygame.display.set_mode([500, 500])
+sdl2.ext.init()
+
+window = sdl2.ext.Window("Hello World!", size=(640, 480))
+window.show()
+
+factory = sdl2.ext.SpriteFactory(sdl2.ext.SOFTWARE)
+sprite = factory.from_image("atlas.png")
+
+spriterenderer = factory.create_sprite_render_system(window)
+spriterenderer.render(sprite)
 
 running = True
 
 while running:
-
-    for event in pygame.event.get():
-
-        if event.type == pygame.QUIT:
-
+    startTime = time.perf_counter()
+    events = sdl2.ext.get_events()
+    for event in events:
+        if event.type == sdl2.SDL_QUIT:
             running = False
+            break
 
-    screen.fill((255, 255, 255))
+    if 0:
+        running = False
+    spriterenderer.render(sprite)
 
-    pygame.draw.circle(screen, (0, 0, 255), (250, 250), 75)
 
-    pygame.display.flip()
+    stopTime = time.perf_counter()
+    deltaTime = startTime - stopTime
+    time.sleep(1/60)
+    print("h")
+    
+    window.refresh()
 
-pygame.quit()
 
-#import socket
+import socket
 
-#s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
-#s.connect((socket.gethostname(), 1235))
+s.connect((socket.gethostname(), 1235))
 
-#msg = s.recv(1024)
+msg = s.recv(1024)
 
-#print(msg.decode("utf-8"))
+print(msg.decode("utf-8"))
