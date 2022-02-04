@@ -1,24 +1,16 @@
 import socket
+import threading
 import time
+
+from vec import *
 
 # AF_INET == ipv4
 # SOCK_STREAM == TCP
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
-s.bind((socket.gethostname(), 1232))
+s.bind((socket.gethostname(), 1234))
 
 s.listen(5)
-
-class Vec2:
-    def __init__(self, x, y):
-        self.x = x
-        self.y = y
-
-def getAddVec2(v1, v2):
-    return Vec2(v1.x + v2.x, v1.y + v2.y)
-
-def getMulVec2(v1, v2):
-    return Vec2(v1.x * v2.x, v1.y * v2.y)
 
 class Physics:
     def __init__(self, pos):
@@ -41,6 +33,25 @@ class Bullet:
     def __init__(self, pos):
         self.physics = Physics(pos)
 
+class Action:
+    def __init__(self, tag):
+        self.tag = tag
+        self.down = False
+        self.downed = False
+        self.upped = False
+
+actions = [
+    Action("up"),
+    Action("down"),
+    Action("left"),
+    Action("right"),
+]
+
+def getAction(tag):
+    for action in actions:
+        if(action.tag == tag):
+            return action
+
 players = [];
 bullets = [];
 
@@ -56,15 +67,51 @@ programBeginTime = time.perf_counter()
 
 playerCount = 0
 
+
+while playerCount < 1:
+    clientSocket, address = s.accept()
+    print("Connection from {address} has been established.")
+    playerCount += 1
+
+#setup event recieve loop
+def eventRecieveFunction():
+    while True:
+        msg = clientSocket.recv(1024)
+        msgText = msg.decode("utf-8")
+
+        event = msgText.split(" ")
+
+        for action in actions:
+            if(action.tag == event[0]):
+                if(event[1] == "downed"):
+                    action.down = True
+                if(event[1] == "upped"):
+                    action.down = False
+
+
+thread = threading.Thread(target=eventRecieveFunction)
+
+thread.start()
+
 while True:
 
     startTime = time.perf_counter()
 
     passedTime = time.perf_counter() - programBeginTime
 
-    print(passedTime)
-
     #update game
+
+    players[0].physics.velocity.x = 0;
+    players[0].physics.velocity.y = 0;
+
+    if(getAction("up").down):
+        players[0].physics.velocity.y = -1;
+    if(getAction("down").down):
+        players[0].physics.velocity.y = 1;
+    if(getAction("left").down):
+        players[0].physics.velocity.x = -1;
+    if(getAction("right").down):
+        players[0].physics.velocity.x = 1;
     
     for player in players:
         player.physics.update()
@@ -73,13 +120,7 @@ while True:
         bullet.physics.update()
 
     #server stuff
-    if(playerCount < 1):
-        clientsocket, address = s.accept()
-        print("Connection from {address} has been established.")
-        playerCount += 1
-
-    if(playerCount >= 1):
-        clientsocket.send(bytes(str(int(players[0].physics.pos.x)) + " " + str(int(players[0].physics.pos.y)) ,"utf-8"))
+    clientSocket.send(bytes(str(int(players[0].physics.pos.x)) + " " + str(int(players[0].physics.pos.y)), "utf-8"))
 
     #handle timing
 
@@ -93,21 +134,3 @@ while True:
 
     time.sleep(sleepTime)
 
-# create the socket
-# AF_INET == ipv4
-# SOCK_STREAM == TCP
-#s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-
-#s.bind((socket.gethostname(), 1235))
-
-#s.listen(5)
-
-#while True:
-    # now our endpoint knows about the OTHER endpoint.
-    #clientsocket, address = s.accept()
-    #print(f"Connection from {address} has been established.")
-
-    #clientsocket.send(bytes("Hey there!!!","utf-8"))
-
-
-#print("hello")
