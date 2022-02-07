@@ -8,7 +8,7 @@ from vec import *
 # SOCK_STREAM == TCP
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
-s.bind((socket.gethostname(), 1234))
+s.bind((socket.gethostname(), 1235))
 
 s.listen(5)
 
@@ -17,7 +17,7 @@ class Physics:
         self.pos = pos
         self.velocity = Vec2(0, 0)
         self.acceleration = Vec2(0, 0)
-        self.resistance = Vec2(0.97, 0.97)
+        self.resistance = Vec2(0.9, 0.9)
     
     def update(self):
         self.pos = getAddVec2(self.pos, self.velocity)
@@ -101,17 +101,17 @@ while True:
 
     #update game
 
-    players[0].physics.velocity.x = 0;
-    players[0].physics.velocity.y = 0;
+    players[0].physics.acceleration.x = 0;
+    players[0].physics.acceleration.y = 0;
 
     if(getAction("up").down):
-        players[0].physics.velocity.y = -1;
+        players[0].physics.acceleration.y = -1;
     if(getAction("down").down):
-        players[0].physics.velocity.y = 1;
+        players[0].physics.acceleration.y = 1;
     if(getAction("left").down):
-        players[0].physics.velocity.x = -1;
+        players[0].physics.acceleration.x = -1;
     if(getAction("right").down):
-        players[0].physics.velocity.x = 1;
+        players[0].physics.acceleration.x = 1;
     
     for player in players:
         player.physics.update()
