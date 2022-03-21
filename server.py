@@ -99,7 +99,6 @@ while True:
     passedTime = time.perf_counter() - programBeginTime
 
     #update game
-
     players[0].physics.velocity.x = 0
     players[0].physics.velocity.y = 0
 

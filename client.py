@@ -24,9 +24,9 @@ window = sdl2.ext.Window("Hello World!", size=(640, 480))
 window.show()
 
 factory = sdl2.ext.SpriteFactory(sdl2.ext.SOFTWARE)
-#texture = factory.from_image("atlas.png", size=(50, 50))
+texture = factory.from_image("sprites/person.png")#, size=(50, 50))
 backgroundTexture = factory.from_color((0, 0, 0), size=(640, 480))
-texture = factory.from_color((255, 255, 255), size=(50, 50))
+#texture = factory.from_color((255, 255, 255), size=(50, 50))
 
 spriterenderer = factory.create_sprite_render_system(window)
 
