@@ -3,43 +3,17 @@ import threading
 import time
 
 from vec import *
+from classes import *
+from functions import *
 
-# AF_INET == ipv4
-# SOCK_STREAM == TCP
+#connect to socket
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
-s.bind((socket.gethostname(), 1234))
+s.bind((socket.gethostname(), 1235))
 
 s.listen(5)
 
-class Physics:
-    def __init__(self, pos):
-        self.pos = pos
-        self.velocity = Vec2(0, 0)
-        self.acceleration = Vec2(0, 0)
-        self.resistance = Vec2(0.97, 0.97)
-    
-    def update(self):
-        self.pos = getAddVec2(self.pos, self.velocity)
-        self.velocity = getAddVec2(self.velocity, self.acceleration)
-        self.velocity = getMulVec2(self.velocity, self.resistance)
-
-
-class Player:
-    def __init__(self, pos):
-        self.physics = Physics(pos)
-
-class Bullet:
-    def __init__(self, pos):
-        self.physics = Physics(pos)
-
-class Action:
-    def __init__(self, tag):
-        self.tag = tag
-        self.down = False
-        self.downed = False
-        self.upped = False
-
+#global variables
 actions = [
     Action("up"),
     Action("down"),
@@ -47,15 +21,11 @@ actions = [
     Action("right"),
 ]
 
-def getAction(tag):
-    for action in actions:
-        if(action.tag == tag):
-            return action
+players = []
+bullets = []
+sprites = []
 
-players = [];
-bullets = [];
-
-players.append(Player(Vec2(100, 100)))
+availableID = 0
 
 FRAME_TIME = 1 / 60
 
@@ -67,14 +37,9 @@ programBeginTime = time.perf_counter()
 
 playerCount = 0
 
+#local functions
 
-while playerCount < 1:
-    clientSocket, address = s.accept()
-    print("Connection from {address} has been established.")
-    playerCount += 1
-
-#setup event recieve loop
-def eventRecieveFunction():
+def eventReceiveFunction():
     while True:
         msg = clientSocket.recv(1024)
         msgText = msg.decode("utf-8")
@@ -88,11 +53,45 @@ def eventRecieveFunction():
                 if(event[1] == "upped"):
                     action.down = False
 
+def getAction(tag):
+    for action in actions:
+        if(action.tag == tag):
+            return action
 
-thread = threading.Thread(target=eventRecieveFunction)
+def addSprite(pos, size):
+    global availableID
+    sprites.append(ServerSprite(pos, size, availableID))
+    availableID += 1
+    return availableID - 1
 
+def getSprite(ID):
+    for sprite in sprites:
+        if(sprite.ID == ID):
+            return sprite;
+
+def addPlayer(pos):
+    players.append(Player(pos, addSprite(pos, Vec2(40, 40))))
+    
+
+#MAIN PROGRAM
+
+addPlayer(Vec2(100, 100))
+
+addSprite(Vec2(200, 100), Vec2(20, 20))
+
+#wait for players to connect
+while playerCount < 1:
+    clientSocket, address = s.accept()
+    print("Connection from {address} has been established.")
+    playerCount += 1
+
+#start event receive thread
+thread = threading.Thread(target=eventReceiveFunction)
 thread.start()
 
+print("Started game loop.")
+
+#start game loop
 while True:
 
     startTime = time.perf_counter()
@@ -101,17 +100,17 @@ while True:
 
     #update game
 
-    players[0].physics.velocity.x = 0;
-    players[0].physics.velocity.y = 0;
+    players[0].physics.velocity.x = 0
+    players[0].physics.velocity.y = 0
 
     if(getAction("up").down):
-        players[0].physics.velocity.y = -1;
+        players[0].physics.velocity.y = -1
     if(getAction("down").down):
-        players[0].physics.velocity.y = 1;
+        players[0].physics.velocity.y = 1
     if(getAction("left").down):
-        players[0].physics.velocity.x = -1;
+        players[0].physics.velocity.x = -1
     if(getAction("right").down):
-        players[0].physics.velocity.x = 1;
+        players[0].physics.velocity.x = 1
     
     for player in players:
         player.physics.update()
@@ -119,8 +118,17 @@ while True:
     for bullet in bullets:
         bullet.physics.update()
 
+    for player in players:
+        sprite = getSprite(player.spriteID)
+        sprite.pos = player.physics.pos
+
     #server stuff
-    clientSocket.send(bytes(str(int(players[0].physics.pos.x)) + " " + str(int(players[0].physics.pos.y)), "utf-8"))
+    stringToSend = ""
+    for sprite in sprites:
+        stringToSend += str(int(sprite.pos.x)) + "," + str(int(sprite.pos.y)) + "," + str(int(sprite.size.x)) + "," + str(int(sprite.size.y)) + "."
+
+    bytesToSend = bytes(stringToSend, "utf-8")
+    clientSocket.send(bytesToSend)
 
     #handle timing
 
@@ -133,4 +141,3 @@ while True:
         sleepTime = 0
 
     time.sleep(sleepTime)
-

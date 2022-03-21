@@ -2,6 +2,8 @@ import socket
 import threading
 
 from vec import *
+from classes import *
+from functions import *
 
 import sys
 import time
@@ -10,25 +12,12 @@ import sdl2.ext
 
 FRAME_TIME = 1 / 60
 
-class Sprite:
-    def __init__(self, pos, size):
-        self.pos = pos;
-        self.size = size;
-
 #setup keys
-class Key:
-    def __init__(self):
-        self.down = False
-        self.downed = False
-        self.downed = False
-
-    
 keys = []
 for i in range(0, 1000):
     keys.append(Key())
 
 #setup sprites and rendering
-
 sdl2.ext.init()
 
 window = sdl2.ext.Window("Hello World!", size=(640, 480))
@@ -45,26 +34,37 @@ sprites = []
 
 sprites.append(Sprite(Vec2(20, 20), Vec2(50, 50)))
 
+#connect to server
 serverSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
-serverSocket.connect((socket.gethostname(), 1234))
+serverSocket.connect((socket.gethostname(), 1235))
 
-#setup server connection
-def serverThreadFunction():
+#threaded communication functions
+def receiveGameStateThreadFunction():
 
     while True:
 
         msg = serverSocket.recv(1024)
         msgText = msg.decode("utf-8")
+        print(msgText)
 
-        coords = msgText.split(" ");
+        serverSprites = msgText.split(".");
+        serverSprites.pop(len(serverSprites) - 1)
 
-        print(coords)
+        sprites.clear()
 
-        sprites[0].pos = Vec2(int(coords[0]), int(coords[1]))
+        for serverSprite in serverSprites:
+            coords = serverSprite.split(",");
 
-thread = threading.Thread(target=serverThreadFunction)
+            sprites.append(Sprite(
+                Vec2(int(coords[0]), int(coords[1])),
+                Vec2(int(coords[2]), int(coords[3]))
+            ))
 
+#MAIN PROGRAM
+
+#start game state receive thread
+thread = threading.Thread(target=receiveGameStateThreadFunction)
 thread.start()
 
 running = True
@@ -116,8 +116,11 @@ while running:
     #update
 
     #render
+
     spriterenderer.render(backgroundTexture, 0, 0)
-    spriterenderer.render(texture, sprites[0].pos.x, sprites[0].pos.y)
+
+    for sprite in sprites:
+        spriterenderer.render(texture, sprite.pos.x, sprite.pos.y)
 
     #handle frame time
 
@@ -132,4 +135,3 @@ while running:
     #print("h")
     
     window.refresh()
-
